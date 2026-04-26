@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en" x-data="app()" :class="{ 'dark': darkMode }" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kentik Enablement Portal</title>
+<script>window.tailwind = { config: {} };</script>
+<script src="https://cdn.tailwindcss.com/3.4.1"></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        navy: { 950: '#020818', 900: '#040d24', 800: '#071038', 700: '#0a1650', 600: '#0e1f6e' },
+        cyan: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' },
+        electric: { 400: '#60a5fa', 500: '#3b82f6' },
+      },
+      fontFamily: {
+        sans: ['Space Grotesk', 'Sarabun', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        th: ['Sarabun', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --glow-cyan: 0 0 20px rgba(34,211,238,0.4), 0 0 40px rgba(34,211,238,0.15);
+    --glow-blue: 0 0 20px rgba(96,165,250,0.4), 0 0 40px rgba(96,165,250,0.1);
+    --glow-ibigkung: 0 0 15px rgba(34,211,238,0.6), 0 0 30px rgba(96,165,250,0.3), 0 0 60px rgba(139,92,246,0.2);
+    --grid-color: rgba(34,211,238,0.04);
+    --border-glow: rgba(34,211,238,0.25);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: #020818;
+    font-family: 'Space Grotesk', 'Sarabun', sans-serif;
+    overflow-x: hidden;
+  }
+
+  .light body { background: #f0f4ff; }
+
+  /* Grid background */
+  .bg-grid {
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Glow effects */
+  .glow-cyan { box-shadow: var(--glow-cyan); }
+  .glow-blue { box-shadow: var(--glow-blue); }
+  .text-glow-cyan { text-shadow: 0 0 20px rgba(34,211,238,0.8), 0 0 40px rgba(34,211,238,0.4); }
+  .text-glow-ibigkung {
+    background: linear-gradient(135deg, #22d3ee, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(34,211,238,0.5));
+  }
+
+  /* Cards */
+  .card-dark {
+    background: linear-gradient(135deg, rgba(7,16,56,0.9) 0%, rgba(4,13,36,0.95) 100%);
+    border: 1px solid rgba(34,211,238,0.12);
+    backdrop-filter: blur(12px);
+  }
+  .card-light {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,244,255,0.9) 100%);
+    border: 1px solid rgba(14,31,110,0.12);
+    box-shadow: 0 4px 24px rgba(14,31,110,0.08);
+  }
+  .card-hover-dark:hover {
+    border-color: rgba(34,211,238,0.35);
+    box-shadow: var(--glow-cyan);
+    transform: translateY(-2px);
+  }
+  .card-hover-light:hover {
+    border-color: rgba(59,130,246,0.4);
+    box-shadow: 0 8px 32px rgba(14,31,110,0.15);
+    transform: translateY(-2px);
+  }
+
+  /* Sidebar */
+  .sidebar-item-active-dark {
+    background: linear-gradient(90deg, rgba(34,211,238,0.15), rgba(34,211,238,0.05));
+    border-left: 2px solid #22d3ee;
+    color: #22d3ee;
+  }
+  .sidebar-item-active-light {
+    background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.04));
+    border-left: 2px solid #3b82f6;
+    color: #1d4ed8;
+  }
+
+  /* Architecture diagram */
+  .arch-node-dark {
+    background: linear-gradient(135deg, rgba(10,22,80,0.95), rgba(7,16,56,0.9));
+    border: 1px solid rgba(34,211,238,0.25);
+  }
+  .arch-node-light {
+    background: linear-gradient(135deg, rgba(239,246,255,0.98), rgba(219,234,254,0.9));
+    border: 1px solid rgba(59,130,246,0.3);
+  }
+
+  /* Arrow */
+  .arch-arrow { position: relative; }
+  .arch-arrow::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: #22d3ee;
+  }
+
+  /* Pulse animation */
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    70% { transform: scale(1.4); opacity: 0; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+  @keyframes flow-data {
+    0% { stroke-dashoffset: 100; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  @keyframes dot-flow {
+    0% { offset-distance: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { offset-distance: 100%; opacity: 0; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .animate-slide-in { animation: slide-in 0.3s ease forwards; }
+  .animate-fade-up { animation: fade-up 0.4s ease forwards; }
+  .animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+
+  .pulse-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(34,211,238,0.5);
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  /* Flow animation on SVG */
+  .flow-line {
+    stroke-dasharray: 8 4;
+    animation: flow-data 1.5s linear infinite;
+  }
+
+  /* Badge */
+  .badge-cyan {
+    background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(34,211,238,0.08));
+    border: 1px solid rgba(34,211,238,0.3);
+    color: #22d3ee;
+  }
+  .badge-blue {
+    background: linear-gradient(135deg, rgba(96,165,250,0.2), rgba(96,165,250,0.08));
+    border: 1px solid rgba(96,165,250,0.3);
+    color: #60a5fa;
+  }
+  .badge-green {
+    background: linear-gradient(135deg, rgba(52,211,153,0.2), rgba(52,211,153,0.08));
+    border: 1px solid rgba(52,211,153,0.3);
+    color: #34d399;
+  }
+  .badge-amber {
+    background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.08));
+    border: 1px solid rgba(251,191,36,0.3);
+    color: #fbbf24;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #020818; }
+  ::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.3); border-radius: 3px; }
+
+  .light ::-webkit-scrollbar-track { background: #f0f4ff; }
+  .light ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.4); }
+
+  /* Transition */
+  .transition-all-300 { transition: all 0.3s ease; }
+
+  /* Mobile sidebar overlay */
+  .sidebar-overlay { backdrop-filter: blur(4px); }
+
+  /* Checklist step */
+  .step-connector-dark { background: linear-gradient(180deg, #22d3ee, rgba(34,211,238,0.1)); }
+  .step-connector-light { background: linear-gradient(180deg, #3b82f6, rgba(59,130,246,0.1)); }
+
+  /* KB Tag */
+  .kb-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* Header glass */
+  .header-glass-dark {
+    background: rgba(2,8,24,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(34,211,238,0.1);
+  }
+  .header-glass-light {
+    background: rgba(240,244,255,0.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(59,130,246,0.15);
+    box-shadow: 0 2px 20px rgba(14,31,110,0.08);
+  }
+
+  /* IBIGKUNG footer glow */
+  .ibigkung-glow {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  .ibigkung-shimmer {
+    background: linear-gradient(90deg, #22d3ee, #60a5fa, #a78bfa, #60a5fa, #22d3ee);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* Responsive sidebar */
+  @media (max-width: 768px) {
+    .sidebar-mobile { transform: translateX(-100%); transition: transform 0.3s ease; }
+    .sidebar-mobile.open { transform: translateX(0); }
+  }
+
+  .arch-diagram-svg .data-dot {
+    animation: dot-flow 3s ease-in-out infinite;
+    offset-path: path('M 60 120 L 160 120');
+  }
+</style>
+</head>
+
+<body class="min-h-screen transition-colors duration-300"
+  :class="darkMode ? 'bg-navy-950 text-slate-100' : 'bg-blue-50 text-slate-800'">
+
+<div class="bg-grid fixed inset-0 pointer-events-none" :class="darkMode ? 'opacity-100' : 'opacity-30'"></div>
+
+<!-- Mobile overlay -->
+<div x-show="sidebarOpen && isMobile" @click="sidebarOpen = false"
+  class="sidebar-overlay fixed inset-0 bg-black/60 z-20 md:hidden"
+  x-transition:enter="transition-opacity duration-300"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition-opacity duration-300"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0">
+</div>
+
+<!-- ═══════════════════════════════════════════════════ HEADER ═══ -->
+<header class="fixed top-0 left-0 right-0 z-30 h-14 flex items-center px-4 md:px-6"
+  :class="darkMode ? 'header-glass-dark' : 'header-glass-light'">
+  <div class="flex items-center gap-3 flex-1">
+    <!-- Hamburger (mobile) -->
+    <button @click="sidebarOpen = !sidebarOpen"
+      class="md:hidden p-2 rounded-lg transition-all"
+      :class="darkMode ? 'hover:bg-white/5 text-cyan-400' : 'hover:bg-blue-100 text-blue-600'">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5">
+      <div class="relative w-8 h-8 rounded-lg flex items-center justify-center"
+        :class="darkMode ? 'bg-gradient-to-br from-cyan-500/30 to-blue-600/20 border border-cyan-500/30' : 'bg-gradient-to-br from-blue-500/20 to-blue-700/10 border border-blue-400/30'">
+        <div x-show="darkMode" class="absolute inset-0 rounded-lg" style="background: radial-gradient(circle at 50% 50%, rgba(34,211,238,0.2), transparent)"></div>
+        <i data-lucide="network" class="w-4 h-4 relative z-10" :class="darkMode ? 'text-cyan-400' : 'text-blue-600'"></i>
+      </div>
+      <div>
+        <div class="font-bold text-sm leading-none tracking-wide"
+          :class="darkMode ? 'text-white' : 'text-slate-800'">
+          Kentik
+          <span :class="darkMode ? 'text-cyan-400' : 'text-blue-600'"> Enablement</span>
+        </div>
+        <div class="text-xs leading-none mt-0.5" :class="darkMode ? 'text-slate-500' : 'text-slate-400'">Portal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right controls -->
+  <div class="flex items-center gap-2">
+    <!-- Language toggle -->
+    <button @click="lang = lang === 'en' ? 'th' : 'en'"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+      :class="darkMode ? 'bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300' : 'bg-white hover:bg-blue-50 border border-blue-200 text-slate-600'">
+      <span class="text-sm">🌐</span>
+      <span x-text="lang === 'en' ? 'TH' : 'EN'"></span>
+    </button>
+
+    <!-- Dark mode toggle -->
+    <button @click="darkMode = !darkMode"
+      class="p-2 rounded-lg transition-all"
+      :class="darkMode ? 'bg-white/5 hover:bg-white/10 border border-white/10 text-yellow-400' : 'bg-white hover:bg-blue-50 border border-blue-200 text-slate-600'">
+      <i :data-lucide="darkMode ? 'sun' : 'moon'" class="w-4 h-4"></i>
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════ LAYOUT ═══ -->
+<div class="flex pt-14 min-h-screen">
+
+  <!-- ═══════════════════════════════════════════════ SIDEBAR ═══ -->
+  <aside class="fixed left-0 top-14 bottom-0 w-64 z-25 overflow-y-auto transition-transform duration-300"
+    :class="[
+      darkMode ? 'border-r border-cyan-950/50' : 'border-r border-blue-100',
+      sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+      darkMode ? 'bg-navy-900/95' : 'bg-white/95',
+      'backdrop-blur-xl'
+    ]"
+    style="z-index: 25;">
+
+    <div class="p-4 space-y-1">
+      <!-- Nav label -->
+      <p class="text-xs font-semibold uppercase tracking-widest mb-3 px-2"
+        :class="darkMode ? 'text-slate-600' : 'text-slate-400'">Navigation</p>
+
+      <template x-for="item in navItems" :key="item.id">
+        <button @click="activePage = item.id; if(isMobile) sidebarOpen = false"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+          :class="[
+            activePage === item.id
+              ? (darkMode ? 'sidebar-item-active-dark' : 'sidebar-item-active-light')
+              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-white/5' : 'text-slate-500 hover:text-slate-700 hover:bg-blue-50')
+          ]">
+          <i :data-lucide="item.icon" class="w-4 h-4 flex-shrink-0"></i>
+          <span x-text="item.label[lang]"></span>
+          <span x-show="item.badge" class="ml-auto text-xs px-1.5 py-0.5 rounded"
+            :class="darkMode ? 'badge-cyan' : 'badge-blue'"
+            x-text="item.badge"></span>
+        </button>
+      </template>
+
+      <!-- Divider -->
+      <div class="my-4 border-t" :class="darkMode ? 'border-white/5' : 'border-blue-100'"></div>
+      <p class="text-xs font-semibold uppercase tracking-widest mb-3 px-2"
+        :class="darkMode ? 'text-slate-600' : 'text-slate-400'">Progress</p>
+
+      <!-- Progress -->
+      <div class="px-2 py-3 rounded-lg" :class="darkMode ? 'bg-white/3' : 'bg-blue-50'">
+        <div class="flex justify-between text-xs mb-2"
+          :class="darkMode ? 'text-slate-400' : 'text-slate-500'">
+          <span x-text="lang === 'en' ? 'Completion' : 'ความคืบหน้า'"></span>
+          <span class="font-mono" :class="darkMode ? 'text-cyan-400' : 'text-blue-600'"
+            x-text="completionPct + '%'"></span>
+        </div>
+        <div class="h-1.5 rounded-full" :class="darkMode ? 'bg-white/10' : 'bg-blue-100'">
+          <div class="h-full rounded-full transition-all duration-500"
+            :class="darkMode ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 'bg-gradient-to-r from-blue-500 to-blue-700'"
+            :style="'width:' + completionPct + '%'"></div>
+        </div>
+        <p class="text-xs mt-2" :class="darkMode ? 'text-slate-500' : 'text-slate-400'">
+          <span x-text="completedCount"></span> / <span x-text="totalChecks"></span>
+          <span x-text="lang === 'en' ? ' items done' : ' รายการ'"></span>
+        </p>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="mt-4 grid grid-cols-2 gap-2">
+        <div class="p-2 rounded-lg text-center" :class="darkMode ? 'bg-white/3' : 'bg-blue-50'">
+          <div class="text-lg font-bold" :class="darkMode ? 'text-cyan-400' : 'text-blue-600'">5</div>
+          <div class="text-xs" :class="darkMode ? 'text-slate-500' : 'text-slate-400'"
+            x-text="lang === 'en' ? 'Phases' : 'เฟส'"></div>
+        </div>
+        <div class="p-2 rounded-lg text-center" :class="darkMode ? 'bg-white/3' : 'bg-blue-50'">
+          <div class="text-lg font-bold" :class="darkMode ? 'text-electric-400' : 'text-blue-700'">4</div>
+          <div class="text-xs" :class="darkMode ? 'text-slate-500' : 'text-slate-400'"
+            x-text="lang === 'en' ? 'Sections' : 'ส่วน'"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════════════════ MAIN CONTENT ═══ -->
+  <main class="flex-1 md:ml-64 min-h-screen p-4 md:p-6 lg:p-8">
+
+    <!-- ── ONBOARDING CHECKLIST PAGE ── -->
+    <div x-show="activePage === 'checklist'" x-transition:enter="animate-fade-up">
+
+      <!-- Page header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="kb-tag badge-cyan" x-text="lang === 'en' ? 'Interactive' : 'อินเทอร์แอคทีฟ'"></span>
+          <span class="kb-tag badge-blue">v2.0</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold mb-2" :class="darkMode ? 'text-white' : 'text-slate-800'">
+          <span x-text="lang === 'en' ? 'Onboarding Checklist' : 'รายการตรวจสอบ Onboarding'"></span>
+        </h1>
+        <p class="text-sm md:text-base" :class="darkMode ? 'text-slate-400' : 'text-slate-500'"
+          x-text="lang === 'en' ? 'Complete each phase to fully onboard Kentik Network Observability Platform.' : 'ทำตามแต่ละเฟสเพื่อ Onboard Kentik Network Observability Platform ให้ครบถ้วน'">
+        </p>
+      </div>
+
+      <!-- Steps -->
+      <div class="space-y-4">
+        <template x-for="(phase, pi) in phases" :key="pi">
+          <div class="rounded-xl overflow-hidden transition-all duration-300 cursor-pointer"
+            :class="[
+              darkMode ? 'card-dark card-hover-dark' : 'card-light card-hover-light',
+              'transition-all-300'
+            ]"
+            @click="phase.open = !phase.open">
+
+            <!-- Phase header -->
+            <div class="flex items-center gap-4 p-4 md:p-5">
+              <!-- Step number -->
+              <div class="relative flex-shrink-0">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
+                  :class="phaseComplete(phase)
+                    ? (darkMode ? 'bg-green-500/20 border-2 border-green-400 text-green-400' : 'bg-green-50 border-2 border-green-500 text-green-600')
+                    : (darkMode ? 'bg-cyan-500/15 border-2 border-cyan-500/40 text-cyan-400' : 'bg-blue-50 border-2 border-blue-400 text-blue-600')">
+                  <span x-show="!phaseComplete(phase)" x-text="pi + 1"></span>
+                  <i x-show="phaseComplete(phase)" data-lucide="check" class="w-5 h-5"></i>
+                </div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-semibold text-sm md:text-base" :class="darkMode ? 'text-white' : 'text-slate-800'"
+                    x-text="phase.title[lang]"></h3>
+                  <span class="text-xs px-2 py-0.5 rounded-full"
+                    :class="phase.badgeClass"
+                    x-text="phase.badge[lang]"></span>
+                </div>
+                <p class="text-xs mt-0.5 truncate" :class="darkMode ? 'text-slate-500' : 'text-slate-400'"
+                  x-text="phase.desc[lang]"></p>
+              </div>
+
+              <!-- Progress mini -->
+              <div class="flex items-center gap-3 flex-shrink-0">
+                <div class="hidden sm:block text-right">
+                  <div class="text-xs font-mono" :class="darkMode ? 'text-cyan-400' : 'text-blue-600'">
+                    <span x-text="phase.items.filter(i => i.done).length"></span>/<span x-text="phase.items.length"></span>
+                  </div>
+                </div>
+                <i :data-lucide="phase.open ? 'chevron-up' : 'chevron-down'"
+                  class="w-4 h-4 transition-transform duration-200"
+                  :class="darkMode ? 'text-slate-500' : 'text-slate-400'"></i>
+              </div>
+            </div>
+
+            <!-- Phase progress bar -->
+            <div class="h-0.5" :class="darkMode ? 'bg-white/5' : 'bg-blue-50'">
+              <div class="h-full transition-all duration-500"
+                :class="darkMode ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 'bg-gradient-to-r from-blue-400 to-blue-600'"
+                :style="'width:' + Math.round(phase.items.filter(i => i.done).length / phase.items.length * 100) + '%'"></div>
+            </div>
+
+            <!-- Items -->
+            <div x-show="phase.open"
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 -translate-y-2"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              @click.stop>
+              <div class="px-4 md:px-5 pb-4 pt-2 space-y-2">
+                <template x-for="(item, ii) in phase.items" :key="ii">
+                  <div class="flex items-start gap-3 p-3 rounded-lg transition-all duration-200 group cursor-pointer"
+                    :class="[
+                      item.done
+                        ? (darkMode ? 'bg-green-500/8 border border-green-500/20' : 'bg-green-50 border border-green-200')
+                        : (darkMode ? 'bg-white/3 border border-white/5 hover:border-cyan-500/20' : 'bg-blue-50/50 border border-transparent hover:border-blue-200'),
+                    ]"
+                    @click="item.done = !item.done; updateProgress()">
+
+                    <!-- Checkbox -->
+                    <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
+                      :class="item.done
+                        ? (darkMode ? 'bg-green-500 border-green-500' : 'bg-green-500 border-green-500')
+                        : (darkMode ? 'border border-slate-600 group-hover:border-cyan-500/60' : 'border-2 border-slate-300 group-hover:border-blue-400')">
+                      <i x-show="item.done" data-lucide="check" class="w-3 h-3 text-white"></i>
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium leading-snug"
+                        :class="[
+                          item.done ? (darkMode ? 'line-through text-slate-500' : 'line-through text-slate-400') : (darkMode ? 'text-slate-200' : 'text-slate-700')
+                        ]"
+                        x-text="item.text[lang]"></div>
+                      <div x-show="item.note" class="text-xs mt-0.5" :class="darkMode ? 'text-slate-600' : 'text-slate-400'"
+                        x-text="item.note ? item.note[lang] : ''"></div>
+                    </div>
+
+                    <span x-show="item.tag" class="kb-tag flex-shrink-0"
+                      :class="item.tagClass"
+                      x-text="item.tag"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Completion banner -->
+      <div x-show="completionPct === 100"
+        x-transition
+        class="mt-6 p-5 rounded-xl text-center"
+        :class="darkMode ? 'bg-gradient-to-r from-green-500/15 to-cyan-500/10 border border-green-500/30' : 'bg-gradient-to-r from-green-50 to-blue-50 border border-green-300'">
+        <div class="text-3xl mb-2">🎉</div>
+        <div class="font-bold text-lg" :class="darkMode ? 'text-green-400' : 'text-green-600'"
+          x-text="lang === 'en' ? 'Onboarding Complete!' : 'Onboarding เสร็จสมบูรณ์!'"></div>
+        <div class="text-sm mt-1" :class="darkMode ? 'text-slate-400' : 'text-slate-500'"
+          x-text="lang === 'en' ? 'Your Kentik environment is fully configured.' : 'ระบบ Kentik ของคุณพร้อมใช้งานอย่างสมบูรณ์'"></div>
+      </div>
+    </div>
+
+    <!-- ── ARCHITECTURE PAGE ── -->
+    <div x-show="activePage === 'architecture'" x-transition:enter="animate-fade-up">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="kb-tag badge-blue" x-text="lang === 'en' ? 'Interactive Diagram' : 'ไดอะแกรมเชิงโต้ตอบ'"></span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold mb-2" :class="darkMode ? 'text-white' : 'text-slate-800'"
+          x-text="lang === 'en' ? 'Architecture Explorer' : 'สถาปัตยกรรม Kentik'"></h1>
+        <p class="text-sm md:text-base" :class="darkMode ? 'text-slate-400' : 'text-slate-500'"
+          x-text="lang === 'en' ? 'Interactive overview of the Kentik data pipeline and platform components.' : 'ภาพรวมเชิงโต้ตอบของ Data Pipeline และ Component ต่างๆ ใน Kentik'">
+        </p>
+      </div>
+
+      <!-- Architecture Diagram -->
+      <div class="rounded-xl p-4 md:p-8 mb-6" :class="darkMode ? 'card-dark' : 'card-light'">
+
+        <!-- Desktop diagram -->
+        <div class="hidden md:block">
+          <div class="flex items-stretch gap-0 w-full">
+
+            <!-- Sources -->
+            <div class="flex-1">
+              <div class="text-center mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider"
+                  :class="darkMode ? 'text-cyan-400' : 'text-blue-600'"
+                  x-text="lang === 'en' ? 'Data Sources' : 'แหล่งข้อมูล'"></span>
+              </div>
+              <div class="space-y-2">
+                <template x-for="src in archSources" :key="src.id">
+                  <div @click="activeArch = activeArch === src.id ? null : src.id"
+                    class="p-3 rounded-lg cursor-pointer transition-all duration-200 border"
+                    :class="[
+                      activeArch === src.id
+                        ? (darkMode ? 'border-cyan-400/60 bg-cyan-500/10 shadow-lg shadow-cyan-500/10' : 'border-blue-400 bg-blue-50 shadow-md')
+                        : (darkMode ? 'border-white/8 bg-white/3 hover:border-cyan-500/30 hover:bg-white/5' : 'border-blue-100 bg-white hover:border-blue-300'),
+                    ]">
+                    <div class="flex items-center gap-2">
+                      <span class="text-lg">{{src.icon}}</span>
+                      <div>
+                        <div class="text-xs font-semibold" :class="darkMode ? 'text-slate-200' : 'text-slate-700'" x-text="src.name[lang]"></div>
+                        <div class="text-xs" :class="darkMode ? 'text-slate-500' : 'text-slate-400'" x-text="src.sub"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Arrow 1 -->
+            <div class="flex flex-col items-center justify-center px-2 min-w-[60px]">
+              <div class="text-xs mb-2 text-center" :class="darkMode ? 'text-slate-600' : 'text-slate-400'"
+                x-text="lang === 'en' ? 'Flow / SNMP' : 'Flow/SNMP'"></div>
+              <svg width="60" height="80" viewBox="0 0 60 80">
+                <line x1="5" y1="40" x2="45" y2="40" :stroke="darkMode ? '#22d3ee' : '#3b82f6'" stroke-width="1.5" stroke-dasharray="4 3" class="flow-line"/>
+                <polygon points="45,35 55,40 45,45" :fill="darkMode ? '#22d3ee' : '#3b82f6'" opacity="0.8"/>
+              </svg>
+            </div>
+
+            <!-- Ingestion -->
+            <div class="flex-1">
+              <div class="text-center mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider"
+                  :class="darkMode ? 'text-electric-400' : 'text-blue-700'"
+                  x-text="lang === 'en' ? 'Ingestion Layer' : 'ชั้น Ingestion'"></span>
+              </div>
+              <div class="space-y-2">
+                <template x-for="ing in archIngestion" :key="ing.id">
+                  <div class="p-3 rounded-lg border"
+                    :class="darkMode ? 'border-blue-500/20 bg-blue-900/15' : 'border-blue-200 bg-blue-50'">
+                    <div class="flex items-center gap-2">
+                      <i :data-lucide="ing.icon" class="w-4 h-4" :class="darkMode ? 'text-electric-400' : 'text-blue-600'"></i>
+                      <div>
+                        <div class="text-xs font-semibold" :class="darkMode ? 'text-slate-200' : 'text-slate-700'" x-text="ing.name"></div>
+                        <div class="text-xs" :class="darkMode ? 'text-slate-500' : 'text-slate-400'" x-text="ing.sub[lang]"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Arrow 2 -->
+            <div class="flex flex-col items-center justify-center px-2 min-w-[60px]">
+              <div class="text-xs mb-2 text-center" :class="darkMode ? 'text-slate-600' : 'text-slate-400'"
+                x-text="lang === 'en' ? 'TLS/443' : 'TLS/443'"></div>
+              <svg width="60" height="80" viewBox="0 0 60 80">
+                <line x1="5" y1="40" x2="45" y2="40" :stroke="darkMode ? '#60a5fa' : '#2563eb'" stroke-width="1.5" stroke-dasharray="4 3" class="flow-line" style="animation-delay:0.5s"/>
+                <polygon points="45,35 55,40 45,45" :fill="darkMode ? '#60a5fa' : '#2563eb'" opacity="0.8"/>
+              </svg>
+            </div>
+
+            <!-- KDE -->
+            <div class="flex-1">
+              <div class="text-center mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider"
+                  :class="darkMode ? 'text-violet-400' : 'text-violet-600'"
+                  x-text="lang === 'en' ? 'Kentik KDE (Cloud)' : 'Kentik KDE (Cloud)'"></span>
+              </div>
+              <div class="p-4 rounded-xl border-2 h-full min-h-[160px] flex flex-col justify-center"
+                :class="darkMode ? 'border-violet-500/30 bg-violet-900/15' : 'border-violet-300 bg-violet-50'">
+                <div class="text-center mb-3">
+                  <div class="text-2xl mb-1">☁️</div>
+                  <div class="text-sm font-bold" :class="darkMode ? 'text-violet-300' : 'text-violet-700'">Kentik Data Engine</div>
+                  <div class="text-xs" :class="darkMode ? 'text-slate-500' : 'text-slate-400'"
+                    x-text="lang === 'en' ? 'SaaS Platform' : 'แพลตฟอร์ม SaaS'"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div class="text-xs text-center p-1.5 rounded"
+                    :class="darkMode ? 'bg-white/5 text-slate-400' : 'bg-white text-slate-500'">Flow Analytics</div>
+                  <div class="text-xs text-center p-1.5 rounded"
+                    :class="darkMode ? 'bg-white/5 text-slate-400' : 'bg-white text-slate-500'">BGP Routing</div>
+                  <div class="text-xs text-center p-1.5 rounded"
+                    :class="darkMode ? 'bg-white/5 text-slate-400' : 'bg-white text-slate-500'">SNMP/NMS</div>
+                  <div class="text-xs text-center p-1.5 rounded"
+                    :class="darkMode ? 'bg-white/5 text-slate-400' : 'bg-white text-slate-500'">Synthetics</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Arrow 3 -->
+            <div class="flex flex-col items-center justify-center px-2 min-w-[60px]">
+              <div class="text-xs mb-2 text-center" :class="darkMode ? 'text-slate-600' : 'text-slate-400'">API / UI</div>
+              <svg width="60" height="80" viewBox="0 0 60 80">
+                <line x1="5" y1="40" x2="45" y2="40" :stroke="darkMode ? '#a78bfa' : '#7c3aed'" stroke-width="1.5" stroke-dasharray="4 3" class="flow-line" style="animation-delay:1s"/>
+                <polygon points="45,35 55,40 45,45" :fill="darkMode ? '#a78bfa' : '#7c3aed'" opacity="0.8"/>
+              </svg>
+            </div>
+
+            <!-- User Layer -->
+            <div class="flex-1">
+              <div class="text-center mb-3">
+                <span class="text-xs font-semibold uppercase tracking-wider"
+                  :class="darkMode ? 'text-amber-400' : 'text-amber-600'"
+                  x-text="lang === 'en' ? 'User Interface' : 'ส่วนติดต่อผู้ใช้'"></span>
+              </div>
+              <div class="space-y-2">
+                <template x-for="ui in archUI" :key="ui.id">
+                  <div class="p-3 rounded-lg border"
+                    :class="darkMode ? 'border-amber-500/20 bg-amber-900/10' : 'border-amber-200 bg-amber-50'">
+                    <div class="flex items-center gap-2">
+                      <i :data-lucide="ui.icon" class="w-4 h-4" :class="darkMode ? 'text-amber-400' : 'text-amber-600'"></i>
+                      <div>
+                        <div class="text-xs font-semibold" :class="darkMode ? 'text-slate-200' : 'text-slate-700'" x-text="ui.name[lang]"></div>
+                        <div class="text-xs" :class="darkMode ? 'text-slate-500' : 'text-slate-400'" x-text="ui.sub"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile diagram (vertical) -->
+        <div class="md:hidden space-y-3">
+          <template x-for="(layer, li) in archLayersMobile" :key="li">
+            <div>
+              <div class="text-xs font-semibold uppercase tracking-wider mb-2"
+                :class="layer.color[darkMode ? 'dark' : 'light']"
+                x-text="layer.label[lang]"></div>
+              <div class="space-y-1.5">
+                <template x-for="node in layer.nodes" :key="node.id">
+                  <div class="p-2.5 rounded-lg border flex items-center gap-2"
+                    :class="darkMode ? 'border-white/8 bg-white/3' : 'border-slate-200 bg-white'">
+                    <span class="text-base" x-text="node.icon"></span>
+                    <div>
+                      <div class="text-xs font-medium" :class="darkMode ? 'text-slate-200' : 'text-slate-700'" x-text="node.name[lang]"></div>
+                      <div class="text-xs" :class="darkMode ? 'text-slate-600' : 'text-slate-400'" x-text="node.sub"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <div x-show="li < archLayersMobile.length - 1" class="flex justify-center my-2">
+                <i data-lucide="arrow-down" class="w-4 h-4" :class="darkMode ? 'text-cyan-500/50' : 'text-blue-400/50'"></i>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Detail panel -->
+        <div x-show="activeArch" x-transition
+          class="mt-6 p-4 rounded-xl"
+          :class="darkMode ? 'bg-cyan-500/8 border border-cyan-500/20' : 'bg-blue-50 border border-blue-200'">
+          <template x-for="src in archSources" :key="src.id">
+            <div x-show="activeArch === src.id">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl" x-text="src.icon"></span>
+                <h4 class="font-semibold" :class="darkMode ? 'text-cyan-300' : 'text-blue-700'" x-text="src.name[lang]"></h4>
+              </div>
+              <p class="text-sm" :class="darkMode ? 'text-slate-400' : 'text-slate-600'" x-text="src.detail[lang]"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Component cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <template x-for="comp in archComponents" :key="comp.id">
+          <div class="p-4 rounded-xl transition-all duration-300 cursor-default"
+            :class="darkMode ? 'card-dark card-hover-dark' : 'card-light card-hover-light'">
+            <div class="flex items-start gap-3 mb-3">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                :class="comp.bgClass">
+                <i :data-lucide="comp.icon" class="w-4 h-4" :class="comp.iconClass"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-sm" :class="darkMode ? 'text-white' : 'text-slate-800'" x-text="comp.name[lang]"></div>
+                <span class="text-xs kb-tag mt-0.5" :class="comp.tagClass" x-text="comp.tag"></span>
+              </div>
+            </div>
+            <p class="text-xs leading-relaxed" :class="darkMode ? 'text-slate-400' : 'text-slate-500'" x-text="comp.desc[lang]"></p>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ── KNOWLEDGE BASE PAGE ── -->
+    <div x-show="activePage === 'kb'" x-transition:enter="animate-fade-up">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="kb-tag badge-green" x-text="lang === 'en' ? 'Reference' : 'เอกสารอ้างอิง'"></span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold mb-2" :class="darkMode ? 'text-white' : 'text-slate-800'"
+          x-text="lang === 'en' ? 'Knowledge Base' : 'คลังความรู้'"></h1>
+        <p class="text-sm" :class="darkMode ? 'text-slate-400' : 'text-slate-500'"
+          x-text="lang === 'en' ? 'Quick-reference cards for key Kentik concepts and configurations.' : 'บัตรอ้างอิงด่วนสำหรับแนวคิดและการตั้งค่า Kentik'"></p>
+      </div>
+
+      <!-- Search -->
+      <div class="relative mb-6">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+          :class="darkMode ? 'text-slate-500' : 'text-slate-400'"></i>
+        <input type="text" x-model="kbSearch"
+          class="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all"
+          :class="darkMode ? 'bg-white/5 border border-white/10 text-slate-200 placeholder-slate-600 focus:border-cyan-500/50' : 'bg-white border border-blue-200 text-slate-700 placeholder-slate-400 focus:border-blue-400'"
+          :placeholder="lang === 'en' ? 'Search knowledge base...' : 'ค้นหา...'">
+      </div>
+
+      <!-- KB Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <template x-for="card in filteredKB" :key="card.id">
+          <div class="p-5 rounded-xl transition-all duration-300"
+            :class="darkMode ? 'card-dark card-hover-dark' : 'card-light card-hover-light'">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  :class="card.iconBg">
+                  <i :data-lucide="card.icon" class="w-4 h-4" :class="card.iconColor"></i>
+                </div>
+                <div class="font-semibold text-sm" :class="darkMode ? 'text-white' : 'text-slate-800'" x-text="card.title[lang]"></div>
+              </div>
+              <span class="kb-tag" :class="card.tagClass" x-text="card.category"></span>
+            </div>
+
+            <div class="space-y-2">
+              <template x-for="(point, pi) in card.points" :key="pi">
+                <div class="flex items-start gap-2">
+                  <div class="w-1 h-1 rounded-full mt-2 flex-shrink-0"
+                    :class="darkMode ? 'bg-cyan-500' : 'bg-blue-500'"></div>
+                  <p class="text-xs leading-relaxed" :class="darkMode ? 'text-slate-400' : 'text-slate-600'"
+                    x-text="point[lang]"></p>
+                </div>
+              </template>
+            </div>
+
+            <div x-show="card.code" class="mt-3 p-2 rounded font-mono text-xs overflow-x-auto"
+              :class="darkMode ? 'bg-black/30 text-green-400' : 'bg-slate-100 text-green-700'"
+              x-text="card.code"></div>
+
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <template x-for="tag in card.tags" :key="tag">
+                <span class="text-xs px-2 py-0.5 rounded-full"
+                  :class="darkMode ? 'bg-white/5 text-slate-500' : 'bg-slate-100 text-slate-400'"
+                  x-text="tag"></span>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div x-show="filteredKB.length === 0" class="text-center py-12"
+        :class="darkMode ? 'text-slate-600' : 'text-slate-400'">
+        <i data-lucide="search-x" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>
+        <p x-text="lang === 'en' ? 'No results found.' : 'ไม่พบผลลัพธ์'"></p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ FOOTER ═══ -->
+<footer class="md:ml-64 py-6 px-6 border-t"
+  :class="darkMode ? 'border-white/5 bg-navy-950/80' : 'border-blue-100 bg-white/60'">
+  <div class="flex flex-col items-center gap-2">
+    <div class="flex items-center gap-2 text-sm"
+      :class="darkMode ? 'text-slate-600' : 'text-slate-400'">
+      <span x-text="lang === 'en' ? 'Powered by' : 'สร้างโดย'"></span>
+      <span :class="darkMode ? 'ibigkung-shimmer ibigkung-glow' : ''"
+        class="font-bold tracking-wider"
+        :style="!darkMode ? 'background: linear-gradient(135deg, #2563eb, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;' : ''">
+        IBIGKUNG
+      </span>
+    </div>
+    <div class="text-xs" :class="darkMode ? 'text-slate-700' : 'text-slate-400'"
+      x-text="lang === 'en' ? 'Kentik Enablement Portal — Network Observability Made Simple' : 'Kentik Enablement Portal — Network Observability ที่เข้าใจง่าย'">
+    </div>
+  </div>
+</footer>
+
+<script>
+function app() {
+  return {
+    darkMode: true,
+    lang: 'en',
+    activePage: 'checklist',
+    sidebarOpen: false,
+    activeArch: null,
+    kbSearch: '',
+    completedCount: 0,
+    totalChecks: 0,
+    completionPct: 0,
+
+    get isMobile() { return window.innerWidth < 768; },
+
+    navItems: [
+      { id: 'checklist', icon: 'clipboard-check', label: { en: 'Onboarding Checklist', th: 'รายการตรวจสอบ' }, badge: '5' },
+      { id: 'architecture', icon: 'network', label: { en: 'Architecture Explorer', th: 'สถาปัตยกรรม' }, badge: null },
+      { id: 'kb', icon: 'book-open', label: { en: 'Knowledge Base', th: 'คลังความรู้' }, badge: null },
+    ],
+
+    phases: [
+      {
+        open: true,
+        title: { en: '1. Foundation & Account', th: '1. รากฐานและบัญชี' },
+        badge: { en: 'Start Here', th: 'เริ่มที่นี่' },
+        badgeClass: 'badge-cyan',
+        desc: { en: 'Account setup, access, and initial portal configuration', th: 'ตั้งค่าบัญชี, การเข้าถึง, และ Portal เบื้องต้น' },
+        items: [
+          { done: false, text: { en: 'Sign up for trial account at kentik.com', th: 'สมัคร Trial Account ที่ kentik.com' }, note: { en: 'Use corporate email address', th: 'ใช้ Email ขององค์กร' }, tag: 'Required', tagClass: 'badge-cyan' },
+          { done: false, text: { en: 'Activate account via email confirmation link', th: 'Activate บัญชีผ่าน Email Confirmation Link' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Select Portal Region (US or EU)', th: 'เลือก Portal Region (US หรือ EU)' }, note: { en: 'Cannot change after selection', th: 'ไม่สามารถเปลี่ยนได้ภายหลัง' }, tag: 'Critical', tagClass: 'badge-amber' },
+          { done: false, text: { en: 'Configure use cases and data types on Welcome page', th: 'ตั้งค่า Use Case และ Data Type ที่ Welcome page' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Set up User Roles (Admin / Member) and invite team', th: 'ตั้งค่า User Roles และ Invite สมาชิกทีม' }, note: { en: 'No per-seat charges', th: 'ไม่มีค่าใช้จ่ายแบบ per-seat' }, tag: 'Team', tagClass: 'badge-blue' },
+          { done: false, text: { en: 'Define Network Boundaries (CIDRs + ASNs)', th: 'กำหนด Network Boundaries (CIDR + ASN)' }, note: { en: 'Required for Inbound/Outbound classification', th: 'จำเป็นสำหรับการจัดประเภท Traffic' }, tag: 'Required', tagClass: 'badge-cyan' },
+        ]
+      },
+      {
+        open: false,
+        title: { en: '2. Data Ingestion', th: '2. การรับข้อมูล (Data Ingestion)' },
+        badge: { en: 'Core', th: 'หลัก' },
+        badgeClass: 'badge-blue',
+        desc: { en: 'Connect routers, configure flow, SNMP, BGP, and cloud sources', th: 'เชื่อมต่อ Router, ตั้งค่า Flow, SNMP, BGP และ Cloud' },
+        items: [
+          { done: false, text: { en: 'Create device inventory (routers, switches, hosts)', th: 'จัดทำ Device Inventory (Router, Switch, Host)' }, note: { en: 'Collect IP, make, model, location for each device', th: 'รวบรวม IP, ยี่ห้อ, รุ่น, ที่ตั้งของแต่ละ Device' }, tag: 'Prep', tagClass: 'badge-amber' },
+          { done: false, text: { en: 'Choose flow protocol: sFlow > IPFIX > NetFlow v9', th: 'เลือก Flow Protocol: sFlow > IPFIX > NetFlow v9' }, note: { en: 'Configure Ingress only to avoid double-counting', th: 'ตั้งค่า Ingress only เพื่อหลีกเลี่ยง double counting' }, tag: 'Technical', tagClass: 'badge-blue' },
+          { done: false, text: { en: 'Calculate baseline FPS (two CLI measurements, 10s apart)', th: 'คำนวณ Baseline FPS (วัด 2 ครั้ง ห่าง 10 วินาที)' }, note: { en: '(F2 - F1) / 10 = FPS', th: '(F2 - F1) / 10 = FPS' }, tag: 'Sizing', tagClass: 'badge-green' },
+          { done: false, text: { en: 'Register devices in Kentik Portal (Settings → Devices)', th: 'ลงทะเบียน Device ใน Kentik Portal (Settings → Devices)' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Enable SNMP polling (v2c or v3) on all devices', th: 'เปิด SNMP Polling (v2c หรือ v3) บน Device ทุกตัว' }, note: { en: 'Set to Standard (5-min interval) for Kentik Map health', th: 'ตั้ง Standard (5 นาที) เพื่อ Kentik Map Health' }, tag: 'Required', tagClass: 'badge-cyan' },
+          { done: false, text: { en: 'Configure BGP peering (iBGP rr-client, 4-byte ASN)', th: 'ตั้งค่า BGP Peering (iBGP rr-client, 4-byte ASN)' }, note: { en: 'Open TCP 179 inbound from Kentik Peering IP', th: 'เปิด TCP 179 inbound จาก Kentik Peering IP' }, tag: 'Optional', tagClass: 'badge-blue' },
+          { done: false, text: { en: 'Install Universal Agent for NMS or Flow Proxy', th: 'ติดตั้ง Universal Agent สำหรับ NMS หรือ Flow Proxy' }, note: { en: 'Linux: 1 core + 4GB RAM per 250 NMS devices', th: 'Linux: 1 core + 4 GB RAM ต่อ 250 devices (NMS)' }, tag: 'Agent', tagClass: 'badge-amber' },
+          { done: false, text: { en: 'Connect cloud providers (AWS/Azure/GCP)', th: 'เชื่อมต่อ Cloud Provider (AWS/Azure/GCP)' }, note: { en: 'Start with Metadata-Only export to verify connectivity', th: 'เริ่มจาก Metadata-Only เพื่อยืนยันการเชื่อมต่อ' }, tag: 'Cloud', tagClass: 'badge-blue' },
+        ]
+      },
+      {
+        open: false,
+        title: { en: '3. Context & Tagging', th: '3. Context และ Tags' },
+        badge: { en: 'Enrich', th: 'เพิ่มบริบท' },
+        badgeClass: 'badge-green',
+        desc: { en: 'Sites, labels, interface classification, and data enrichment', th: 'Sites, Labels, Interface Classification, และ Data Enrichment' },
+        items: [
+          { done: false, text: { en: 'Create Sites with physical addresses', th: 'สร้าง Sites พร้อมที่อยู่จริง (เช่น Data Center address)' }, note: { en: 'Required for Kentik Map to show locations', th: 'จำเป็นสำหรับ Kentik Map แสดงที่ตั้ง' }, tag: 'Required', tagClass: 'badge-cyan' },
+          { done: false, text: { en: 'Assign all devices to Sites', th: 'Assign Device ทุกตัวไปยัง Site' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Configure Interface Classification rules', th: 'ตั้งค่า Interface Classification Rules' }, note: { en: 'Classify: Transit, IX Peering, Customer, Internal', th: 'จัดประเภท: Transit, IX Peering, Customer, Internal' }, tag: 'Important', tagClass: 'badge-amber' },
+          { done: false, text: { en: 'Create Labels for logical device grouping', th: 'สร้าง Labels สำหรับจัดกลุ่ม Device แบบ Logical' }, note: { en: 'Examples: Production, Staging, Region-Asia', th: 'ตัวอย่าง: Production, Staging, Region-Asia' }, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Define Custom Dimensions for business context', th: 'กำหนด Custom Dimensions สำหรับ Business Context' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Set up Flow Tags and AS Groups', th: 'ตั้งค่า Flow Tags และ AS Groups' }, note: { en: 'Group ASNs for top-X query analysis', th: 'รวม ASN เป็นกลุ่มสำหรับ top-X Query' }, tag: null, tagClass: '' },
+        ]
+      },
+      {
+        open: false,
+        title: { en: '4. Synthetics & Alerts', th: '4. Synthetics และการแจ้งเตือน' },
+        badge: { en: 'Monitor', th: 'ติดตาม' },
+        badgeClass: 'badge-amber',
+        desc: { en: 'Proactive monitoring, performance testing, and alerting policies', th: 'การติดตามเชิงรุก, ทดสอบประสิทธิภาพ และ Alert Policies' },
+        items: [
+          { done: false, text: { en: 'Set up Synthetics Performance Monitoring test', th: 'ตั้งค่า Synthetics Performance Monitoring' }, note: { en: 'Enter hostname/URL — 5M free credits for trial', th: 'ใส่ hostname/URL — ได้รับ 5M credits ฟรี' }, tag: 'Quick Win', tagClass: 'badge-green' },
+          { done: false, text: { en: 'Deploy private ksynth agents if needed', th: 'Deploy Private ksynth Agent (ถ้าต้องการ)' }, note: { en: 'For internal network monitoring only your org can see', th: 'สำหรับ Monitor ภายในที่เฉพาะองค์กรเห็น' }, tag: 'Optional', tagClass: 'badge-blue' },
+          { done: false, text: { en: 'Create Alert Policies (Traffic, SNMP, Synthetics)', th: 'สร้าง Alert Policies (Traffic, SNMP, Synthetics)' }, note: { en: 'Use Data Explorer query to create policies directly', th: 'ใช้ Data Explorer Query สร้าง Policy ได้ทันที' }, tag: 'Required', tagClass: 'badge-cyan' },
+          { done: false, text: { en: 'Configure notification channels (email, PagerDuty, Slack)', th: 'ตั้งค่า Notification Channels (Email, PagerDuty, Slack)' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Test alerts are firing correctly', th: 'ทดสอบ Alert ว่าทำงานถูกต้อง' }, note: null, tag: null, tagClass: '' },
+        ]
+      },
+      {
+        open: false,
+        title: { en: '5. Reporting & Validation', th: '5. รายงานและการตรวจสอบ' },
+        badge: { en: 'Finalize', th: 'สรุป' },
+        badgeClass: 'badge-green',
+        desc: { en: 'Dashboards, data validation, and final onboarding sign-off', th: 'Dashboard, ตรวจสอบข้อมูล และยืนยัน Onboarding' },
+        items: [
+          { done: false, text: { en: 'Verify all devices show FPS > 0 in portal', th: 'ตรวจสอบ Device ทุกตัวแสดง FPS > 0 ใน Portal' }, note: null, tag: 'Verify', tagClass: 'badge-cyan' },
+          { done: false, text: { en: 'Confirm SNMP Detected on all devices', th: 'ยืนยัน SNMP Detected บน Device ทุกตัว' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Check BGP session = Established', th: 'ตรวจสอบ BGP Session = Established' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Review Device Status — no Incomplete/Never received flow', th: 'ตรวจสอบ Device Status — ไม่มี Incomplete/Never received flow' }, note: { en: 'Network Explorer → Review your devices', th: 'Network Explorer → Review your devices' }, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Customize Observation Deck widgets', th: 'ปรับแต่ง Observation Deck Widgets' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Create and save custom Data Explorer views', th: 'สร้างและบันทึก Custom Data Explorer Views' }, note: null, tag: null, tagClass: '' },
+          { done: false, text: { en: 'Share onboarding summary with team and Kentik CS', th: 'แชร์สรุป Onboarding กับทีมและ Kentik Customer Success' }, note: null, tag: 'Done', tagClass: 'badge-green' },
+        ]
+      },
+    ],
+
+    archSources: [
+      { id: 'router', icon: '🔀', name: { en: 'Routers/Switches', th: 'Router/Switch' }, sub: 'NetFlow, sFlow, IPFIX', detail: { en: 'Physical network devices export flow records using NetFlow v5/v9, IPFIX, or sFlow protocols to Kentik. Configure Ingress-only for accurate measurement.', th: 'อุปกรณ์ Network ส่ง flow records ผ่าน NetFlow v5/v9, IPFIX หรือ sFlow ไปยัง Kentik ตั้งค่า Ingress-only เพื่อความแม่นยำ' } },
+      { id: 'cloud', icon: '☁️', name: { en: 'Cloud Providers', th: 'Cloud Providers' }, sub: 'AWS VPC, Azure VNet, GCP', detail: { en: 'AWS VPC Flow Logs, Azure VNet Flow Logs, and GCP Flow Logs are published to cloud storage (S3/Blob) and ingested by Kentik via API access.', th: 'AWS VPC Flow Logs, Azure VNet Flow Logs และ GCP Flow Logs ถูกเก็บใน Cloud Storage และ Kentik ดึงข้อมูลผ่าน API' } },
+      { id: 'host', icon: '🖥️', name: { en: 'Host Agents', th: 'Host Agents' }, sub: 'Universal Agent, ksynth', detail: { en: 'Software agents installed on Linux hosts collect host traffic, perform synthetic tests, and proxy flow data securely to Kentik.', th: 'Software Agent บน Linux Host รวบรวม Host Traffic ทำ Synthetic Tests และส่งข้อมูล Flow แบบปลอดภัยไปยัง Kentik' } },
+      { id: 'snmp', icon: '📡', name: { en: 'SNMP/Telemetry', th: 'SNMP/Telemetry' }, sub: 'v2c, v3, gRPC ST', detail: { en: 'SNMP polling collects interface metrics, descriptions, and device health. Streaming Telemetry (gRPC) provides real-time data for supported platforms.', th: 'SNMP Polling รวบรวม Interface Metrics และ Device Health ส่วน Streaming Telemetry (gRPC) ให้ข้อมูล Real-time' } },
+    ],
+
+    archIngestion: [
+      { id: 'direct', icon: 'zap', name: 'Direct Ingest', sub: { en: 'Directly to Kentik', th: 'ส่งตรงไป Kentik' } },
+      { id: 'kproxy', icon: 'shield', name: 'kproxy / Flow Proxy', sub: { en: 'Local encrypt & forward', th: 'เข้ารหัสและส่งต่อ' } },
+      { id: 'kbgp', icon: 'git-branch', name: 'BGP Proxy (kbgp)', sub: { en: 'iBGP telemetry relay', th: 'BGP Telemetry Relay' } },
+    ],
+
+    archUI: [
+      { id: 'portal', icon: 'monitor', name: { en: 'Portal UI', th: 'Portal UI' }, sub: 'Data Explorer, NMS, Map' },
+      { id: 'api', icon: 'code', name: { en: 'REST / gRPC API', th: 'REST / gRPC API' }, sub: 'v5/v6 Query API' },
+      { id: 'alerts', icon: 'bell', name: { en: 'Alerts & Webhooks', th: 'Alerts & Webhooks' }, sub: 'PagerDuty, Slack, Email' },
+    ],
+
+    archLayersMobile: [
+      { label: { en: 'Data Sources', th: 'แหล่งข้อมูล' }, color: { dark: 'text-cyan-400', light: 'text-blue-600' }, nodes: [
+        { id: 'r', icon: '🔀', name: { en: 'Routers/Switches', th: 'Router/Switch' }, sub: 'NetFlow, sFlow' },
+        { id: 'c', icon: '☁️', name: { en: 'Cloud Providers', th: 'Cloud' }, sub: 'VPC Flow Logs' },
+      ]},
+      { label: { en: 'Ingestion', th: 'Ingestion' }, color: { dark: 'text-blue-400', light: 'text-blue-700' }, nodes: [
+        { id: 'i1', icon: '🔒', name: { en: 'kproxy / Direct', th: 'kproxy / Direct' }, sub: 'TLS encrypted' },
+      ]},
+      { label: { en: 'Kentik KDE (Cloud)', th: 'Kentik KDE (Cloud)' }, color: { dark: 'text-violet-400', light: 'text-violet-600' }, nodes: [
+        { id: 'kde', icon: '🧠', name: { en: 'Kentik Data Engine', th: 'Kentik Data Engine' }, sub: 'SaaS Analytics Platform' },
+      ]},
+      { label: { en: 'User Interface', th: 'UI/API' }, color: { dark: 'text-amber-400', light: 'text-amber-600' }, nodes: [
+        { id: 'u1', icon: '📊', name: { en: 'Portal & API', th: 'Portal & API' }, sub: 'Data Explorer, Alerts' },
+      ]},
+    ],
+
+    archComponents: [
+      { id: 'kde', icon: 'database', name: { en: 'Kentik Data Engine (KDE)', th: 'Kentik Data Engine (KDE)' }, tag: 'Core', tagClass: 'badge-cyan', bgClass: 'bg-cyan-500/15', iconClass: 'text-cyan-400', desc: { en: 'Cloud-scale time-series database storing flow records, SNMP metrics, BGP routing data with sub-minute query latency.', th: 'Time-series database บน Cloud เก็บ Flow Records, SNMP Metrics, BGP Routing data ด้วย Query Latency ต่ำกว่า 1 นาที' } },
+      { id: 'kproxy', icon: 'shield', name: { en: 'kproxy (Flow Proxy)', th: 'kproxy (Flow Proxy)' }, tag: 'Agent', tagClass: 'badge-blue', bgClass: 'bg-blue-500/15', iconClass: 'text-blue-400', desc: { en: 'Local NetFlow/sFlow/IPFIX collector that encrypts and forwards data to Kentik. Supports rate limiting and resampling.', th: 'ตัวรับ NetFlow/sFlow/IPFIX ภายใน ที่เข้ารหัสและส่งต่อข้อมูลไปยัง Kentik รองรับ Rate Limiting และ Resampling' } },
+      { id: 'ua', icon: 'cpu', name: { en: 'Universal Agent (kagent)', th: 'Universal Agent (kagent)' }, tag: 'Agent', tagClass: 'badge-amber', bgClass: 'bg-amber-500/15', iconClass: 'text-amber-400', desc: { en: 'Next-gen agent supporting SNMP/ST, Flow Proxy, DNS OTT Tap, Syslog Server, and Connectivity Test capabilities.', th: 'Agent รุ่นใหม่รองรับ SNMP/ST, Flow Proxy, DNS OTT Tap, Syslog Server และ Connectivity Test' } },
+      { id: 'bgp', icon: 'git-branch', name: { en: 'BGP Integration', th: 'BGP Integration' }, tag: 'Routing', tagClass: 'badge-green', bgClass: 'bg-green-500/15', iconClass: 'text-green-400', desc: { en: 'Correlates BGP routing data (AS Path, Community) with flow records per-flow. Uses iBGP rr-client peering — telemetry only, no forwarding.', th: 'เชื่อม BGP Routing Data (AS Path, Community) กับ Flow Records ต่อ Flow ใช้ iBGP rr-client — Telemetry เท่านั้น' } },
+      { id: 'nms', icon: 'activity', name: { en: 'NMS Dashboard', th: 'NMS Dashboard' }, tag: 'Monitoring', tagClass: 'badge-blue', bgClass: 'bg-blue-500/15', iconClass: 'text-blue-400', desc: { en: 'Device availability, interface utilization, SNMP metric collection. Supports Streaming Telemetry (gRPC) for real-time data.', th: 'Device Availability, Interface Utilization, SNMP Metric Collection รองรับ Streaming Telemetry (gRPC) สำหรับข้อมูล Real-time' } },
+      { id: 'synth', icon: 'zap', name: { en: 'Synthetics', th: 'Synthetics' }, tag: 'Testing', tagClass: 'badge-cyan', bgClass: 'bg-cyan-500/15', iconClass: 'text-cyan-400', desc: { en: 'Continuous ping/traceroute testing using global public agents or private ksynth agents. Measures latency, jitter, and packet loss.', th: 'ทดสอบ ping/traceroute อย่างต่อเนื่อง ด้วย Global Public Agents หรือ Private ksynth Agents วัด Latency, Jitter, Packet Loss' } },
+    ],
+
+    kbCards: [
+      { id: 'flow', icon: 'radio', title: { en: 'Flow Protocol Selection', th: 'การเลือก Flow Protocol' }, category: 'Flow', tagClass: 'badge-cyan', iconBg: 'bg-cyan-500/15', iconColor: 'text-cyan-400', points: [
+        { en: 'Priority order: sFlow > IPFIX > NetFlow v9 > NetFlow v5', th: 'ลำดับความสำคัญ: sFlow > IPFIX > NetFlow v9 > NetFlow v5' },
+        { en: 'Enable Ingress-only to avoid double-counting. Flow should be within 20% of SNMP recorded traffic.', th: 'เปิด Ingress-only เพื่อหลีกเลี่ยง double counting ค่า Flow ควรอยู่ภายใน 20% ของ SNMP traffic' },
+        { en: 'For NetFlow v9/IPFIX: send Option Templates for interface names and VLAN IDs.', th: 'สำหรับ NetFlow v9/IPFIX: ส่ง Option Templates สำหรับชื่อ Interface และ VLAN IDs' },
+      ], code: '# FPS Calculation\n(F2 - F1) / 10 = FPS', tags: ['NetFlow', 'sFlow', 'IPFIX', 'Sampling'] },
+
+      { id: 'snmp', icon: 'radio-tower', title: { en: 'SNMP Configuration', th: 'การตั้งค่า SNMP' }, category: 'SNMP', tagClass: 'badge-blue', iconBg: 'bg-blue-500/15', iconColor: 'text-blue-400', points: [
+        { en: 'Use v3 for security (AuthProtocol: SHA, PrivProtocol: AES).', th: 'ใช้ v3 เพื่อความปลอดภัย (AuthProtocol: SHA, PrivProtocol: AES)' },
+        { en: 'Standard polling: interface counters every 5 min, descriptions every 3 hrs. Required for Kentik Map health status.', th: 'Standard Polling: Interface counters ทุก 5 นาที, Descriptions ทุก 3 ชม. จำเป็นสำหรับ Kentik Map Health' },
+        { en: 'Open UDP 161 inbound from Kentik SNMP Polling IPs to all monitored devices.', th: 'เปิด UDP 161 inbound จาก Kentik SNMP Polling IPs ไปยัง Device ทุกตัว' },
+      ], code: null, tags: ['v2c', 'v3', 'UDP 161', 'Polling'] },
+
+      { id: 'bgp', icon: 'git-branch', title: { en: 'BGP Peering Setup', th: 'การตั้งค่า BGP Peering' }, category: 'BGP', tagClass: 'badge-green', iconBg: 'bg-green-500/15', iconColor: 'text-green-400', points: [
+        { en: 'Kentik peers as iBGP rr-client — same ASN as your router. 4-byte ASN support is mandatory.', th: 'Kentik Peer แบบ iBGP rr-client — ใช้ ASN เดียวกับ Router ของคุณ ต้องรองรับ 4-byte ASN' },
+        { en: 'Open TCP 179 inbound ACL from Kentik Peering IP. Filter (do not propagate) your default route.', th: 'เปิด TCP 179 inbound ACL จาก Kentik Peering IP Filter default route ไม่ให้ propagate ไปยัง Kentik' },
+        { en: 'Use longer BGP timers to prevent session resets during Internet instability.', th: 'ใช้ BGP Timer ที่ยาวขึ้นเพื่อป้องกัน session reset เมื่อ Internet ไม่เสถียร' },
+      ], code: null, tags: ['iBGP', 'TCP 179', 'ASN', 'Routing'] },
+
+      { id: 'agent', icon: 'cpu', title: { en: 'Universal Agent Sizing', th: 'ขนาด Universal Agent' }, category: 'Agent', tagClass: 'badge-amber', iconBg: 'bg-amber-500/15', iconColor: 'text-amber-400', points: [
+        { en: 'SNMP/ST: 1 CPU core + 4 GB RAM per 250 monitored devices.', th: 'SNMP/ST: 1 CPU core + 4 GB RAM ต่อ 250 devices ที่ Monitor' },
+        { en: 'Flow Proxy (kproxy): 8 CPU cores + 32 GB RAM for 25,000+ FPS.', th: 'Flow Proxy (kproxy): 8 CPU cores + 32 GB RAM สำหรับ 25,000+ FPS' },
+        { en: 'Agent must reach grpc.api.kentik.com on TCP 443 outbound.', th: 'Agent ต้องเข้าถึง grpc.api.kentik.com บน TCP 443 outbound' },
+      ], code: '# Deploy Command\ncurl | sh (from Kentik Portal)\nSettings → Universal Agents → Deploy', tags: ['Linux', 'Docker', 'TCP 443', 'kagent'] },
+
+      { id: 'aws', icon: 'cloud', title: { en: 'AWS Integration', th: 'การเชื่อมต่อ AWS' }, category: 'Cloud', tagClass: 'badge-blue', iconBg: 'bg-blue-500/15', iconColor: 'text-blue-400', points: [
+        { en: 'Start with Metadata-Only export to verify IAM connectivity before enabling flow logs.', th: 'เริ่มจาก Metadata-Only export เพื่อยืนยัน IAM connectivity ก่อนเปิด Flow Logs' },
+        { en: 'Enable VPC Flow Logs with ALL fields (v2–v5). Default fields miss TCP flags and packet size.', th: 'เปิด VPC Flow Logs ด้วย ALL fields (v2-v5) ค่า Default ขาด TCP flags และ Packet Size' },
+        { en: 'Consolidate VPCs into regional S3 buckets for cost and performance efficiency.', th: 'รวม VPC ลงใน Regional S3 Buckets เพื่อประหยัด Cost และเพิ่มประสิทธิภาพ' },
+      ], code: null, tags: ['VPC', 'S3', 'IAM Role', 'Flow Logs'] },
+
+      { id: 'ic', icon: 'layers', title: { en: 'Interface Classification', th: 'Interface Classification' }, category: 'Config', tagClass: 'badge-cyan', iconBg: 'bg-cyan-500/15', iconColor: 'text-cyan-400', points: [
+        { en: 'Classifies interfaces by Network Boundary (Internal/External) and Connectivity Type (Transit, Peering, Customer).', th: 'จัดประเภท Interface ตาม Network Boundary (Internal/External) และ Connectivity Type (Transit, Peering, Customer)' },
+        { en: 'Rules are evaluated top-to-bottom. Place specific rules above general ones to prevent early matching.', th: 'Rules ประเมินจากบนลงล่าง วาง Specific Rules ไว้เหนือ General Rules เพื่อป้องกันการ Match ก่อนกำหนด' },
+        { en: 'Correct classification is essential for Network Explorer, Edge, Protect, and Service Provider modules.', th: 'การจัดประเภทที่ถูกต้องสำคัญมากสำหรับ Network Explorer, Edge, Protect และ Service Provider modules' },
+      ], code: null, tags: ['Transit', 'Peering', 'Customer', 'Boundary'] },
+    ],
+
+    get filteredKB() {
+      if (!this.kbSearch) return this.kbCards;
+      const q = this.kbSearch.toLowerCase();
+      return this.kbCards.filter(c =>
+        c.title.en.toLowerCase().includes(q) ||
+        c.title.th.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q) ||
+        c.tags.some(t => t.toLowerCase().includes(q)) ||
+        c.points.some(p => p.en.toLowerCase().includes(q) || p.th.toLowerCase().includes(q))
+      );
+    },
+
+    phaseComplete(phase) {
+      return phase.items.every(i => i.done);
+    },
+
+    updateProgress() {
+      let total = 0, done = 0;
+      this.phases.forEach(p => {
+        p.items.forEach(i => { total++; if (i.done) done++; });
+      });
+      this.totalChecks = total;
+      this.completedCount = done;
+      this.completionPct = total > 0 ? Math.round(done / total * 100) : 0;
+    },
+
+    init() {
+      this.updateProgress();
+      this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+      this.$watch('activePage', () => { this.$nextTick(() => { if (window.lucide) lucide.createIcons(); }); });
+      this.$watch('phases', () => { this.$nextTick(() => { if (window.lucide) lucide.createIcons(); }); }, { deep: true });
+      this.$watch('darkMode', () => { this.$nextTick(() => { if (window.lucide) lucide.createIcons(); }); });
+      this.$watch('lang', () => { this.$nextTick(() => { if (window.lucide) lucide.createIcons(); }); });
+      window.addEventListener('resize', () => { if (window.innerWidth >= 768) this.sidebarOpen = false; });
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.lucide) lucide.createIcons();
+  setInterval(() => { if (window.lucide) lucide.createIcons(); }, 500);
+});
+</script>
+</body>
+</html>
